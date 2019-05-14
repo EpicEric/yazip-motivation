@@ -6,16 +6,18 @@ Here we explain what is YAZip and why it is an important compression mechanism f
 
 ## What?
 
-__YAZip__ (Yet Another Zip) is a structured data minifier. It can turn any JSON or YAML document into much smaller text. And the best part: it is also valid YAML!
+__YAZip__ (YAML As Zip) is a serialized data minifier. It can turn any JSON or YAML document into much smaller text. And the best part: it is also valid YAML!
 
 ## How?
 
-YAML 1.2 has some features that can (but probably shouldn't...) be used for compressing structured data:
+YAML 1.2 has some features that can (but probably shouldn't...) be used for compressing serialized data:
 
-- Strings do not require quotes, except for empty strings.
-  - But we can use empty strings instead of null!
+- Strings do not require quotes, except for empty strings, or strings containing escaped sequences or special characters.
+- We can save a few bytes with empty values instead of null.
 - Booleans can be shortened (`true` -> `yes`, `false` -> `no`).
+- We can use curly braces and square brackets to declare YAML flow mappings and flow sequences, respectively, much like you would for JSON objects and lists.
 - Top-level objects do not require braces; by using new-lines instead of commas we can save exactly 2 bytes. Example:
+
 ```yaml
 # This:
 {url: github.com,name: GitHub,mascot: Octocat}
@@ -24,7 +26,6 @@ YAML 1.2 has some features that can (but probably shouldn't...) be used for comp
 url: github.com
 name: GitHub
 mascot: Octocat
-# Wow!
 ```
 - And most importantly, we can use an unhealthy amount of [anchors and aliases](https://yaml.org/spec/1.2/spec.html#id2760395) to duplicate strings and similar objects!
 
@@ -32,16 +33,22 @@ mascot: Octocat
 
 There are actually a handful of reasons:
 
-- A YAML library conformant with spec 1.2 can read any valid JSON, YAML or YAZip, which means clients parsing API data as YAML do not need to be updated if the server decides to migrate from one format to another.
-- YAZip automatically eliminates redundancy from both keys and values, which is a common occurrence in a single API call that returns multiple objects.
-- Like YAML, YAZip lets you include several documents in a single file, which means we can even have interdocument compression. Some file-specific mechanisms can be used if working on a filesystem.
+- A YAML library conformant with spec 1.2 can read any valid JSON, YAML or YAZip alike.
+- YAZip automatically eliminates redundancy from both keys and values, which is a common occurrence in a single API call that returns multiple objects in a list.
+- Like YAML, YAZip lets you include several documents in a single file, which means we could even have interdocument compression.
+- Protobuf uses a message descriptor, which is shared between the server and the client, to properly encode data; while YAZip is schemaless.
+- Protobuf requires a specific library and code to encode/decode, while YAZip can be read by any YAML 1.2 library, which is already implemented as a library in basically all popular programming languages.
 - Unlike Protobuf, YAZip can be read directly by a human person (albeit with some difficulty).
-- Protobuf uses a message descriptor, which is shared between the server and the client, to properly encode data; YAZip doesn't.
-- Protobuf requires a specific library and code to encode/decode, while YAZip can be read by any YAML 1.2 library, which is implemented in most of the popular programming languages' standard library.
+
+These features make YAZip an interesting choice for:
+
+- APIs that feed a lot of structured data to clients, are already using JSON/YAML, and/or plan to migrate from one of these formats to YAZip and back, since YAML 1.2 can read all three formats alike.
+- Compressing multiple files with structured data in a filesystem, when using file-specific mechanisms. _// TODO: Start discussing strategies on this_
+- An alternative to JWT (or other JSON-centric projects) that wants to use YAZip instead of JSON to decrease document sizes.
 
 ## Examples
 
-Disclaimer: For handling JSON, I've used [JSONCompare](https://jsoncompare.com/). For handling Protobuf, I've used [JSON to Protobuf Creator](https://www.site24x7.com/tools/json-to-protobuf.html) and [depene/js-protobuf-encode-decode](https://github.com/depene/js-protobuf-encode-decode).
+Disclaimer: For handling JSON, I've used [JSONCompare](https://jsoncompare.com/). For handling Protobuf, I've used [JSON to Protobuf Creator](https://www.site24x7.com/tools/json-to-protobuf.html) and [depene/js-protobuf-encode-decode](https://github.com/depene/js-protobuf-encode-decode). For YAML validation, I've used [JSON to YAML](https://www.json2yaml.com/).
 
 ### Minimal structured data
 
@@ -75,7 +82,7 @@ message Example {
 foo: bar
 ```
 
-__Result__: YAZip final size is 61.5% of minified JSON, and 133.3% of Protobuf.
+__Result__: YAZip's final size is 61.5% of the minified JSON's, and 133.3% of Protobuf's.
 
 ### List of similar objects
 
@@ -140,16 +147,16 @@ message Example {
 
 Anchors within anchors let us replicate the same object or strings over and over when only a few fields actually change.
 
-__Result__: YAZip final size is 66.9% of minified JSON, and 125.6% of Protobuf.
+__Result__: YAZip's final size is 66.9% of the minified JSON's, and 125.6% of Protobuf's.
 
 ## Implementation
 
-_//TODO: Create an implementation in Python or Javascript._
+_//TODO: Create an official implementation_
 
 ## How can I help?
 
 - By reviewing the YAZip specification. _//TODO: Create a YAZip specification_
-- By improving the official implementations of the YAZip encoder. _//TODO: Create a YAZip implementation_
+- By improving the official implementations of the YAZip encoder.
 - By creating new implementations of the YAZip encoder in other languages.
-- By updating open-source YAML parsers that do not conform to YAML 1.2 yet.
+- By updating open-source YAML parser libraries that do not conform to YAML 1.2 yet.
 - By implementing the YAZip encoder on your favorite open-source projects.
