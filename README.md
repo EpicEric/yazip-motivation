@@ -35,7 +35,7 @@ There are actually a handful of reasons:
 
 - A YAML library conformant with spec 1.2 can read any valid JSON, YAML or YAZip alike.
 - YAZip automatically eliminates redundancy from both keys and values, which is a common occurrence in a single API call that returns multiple objects in a list.
-- Like YAML, YAZip lets you include several documents in a single file, which means we could even have interdocument compression.
+- Like YAML, YAZip lets you include several documents in a single file. Unfortunately, anchors are not shared between documents, which means no interdocument compression (without some other protocol for using a single document instead).
 - Protobuf uses a message descriptor, which is shared between the server and the client, to properly encode data; while YAZip is schemaless.
 - Protobuf requires a specific library and code to encode/decode, while YAZip can be read by any YAML 1.2 library, which is already implemented as a library in basically all popular programming languages.
 - Unlike Protobuf, YAZip can be read directly by a human person (albeit with some difficulty).
