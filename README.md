@@ -6,7 +6,7 @@ Here we explain what is YAZip and why it is an important compression mechanism f
 
 ## What?
 
-__YAZip__ (YAML As Zip) is a serialized data minifier. It can turn any JSON or YAML document into much smaller text. And the best part: it is also valid YAML!
+__YAZip__ (YAML As Zip, or Yet Another Zip format) is a serialized data minifier. It can turn any JSON or YAML document into much smaller text. And the best part: it is also valid YAML!
 
 ## How?
 
@@ -37,8 +37,8 @@ There are actually a handful of reasons:
 - YAZip automatically eliminates redundancy from both keys and values, which is a common occurrence in a single API call that returns multiple objects in a list.
 - Like YAML, YAZip lets you include several documents in a single file. Unfortunately, anchors are not shared between documents, which means no interdocument compression (without some other protocol for using a single document instead).
 - Protobuf uses a message descriptor, which is shared between the server and the client, to properly encode data; while YAZip is schemaless.
-- Protobuf requires a specific library and code to encode/decode, while YAZip can be read by any YAML 1.2 library, which is already implemented as a library in basically all popular programming languages.
-- Unlike Protobuf, YAZip can be read directly by a human person (albeit with some difficulty).
+- MessagePack and Protobuf require a specific library and code to decode, while YAZip can be read by any YAML 1.2 library, which is already implemented as a library in basically all popular programming languages.
+- Unlike MessagePack and Protobuf, YAZip can be read directly by a human person (albeit with some difficulty).
 
 These features make YAZip an interesting choice for:
 
@@ -52,7 +52,7 @@ Disclaimer: For handling JSON, I've used [JSONCompare](https://jsoncompare.com/)
 
 ### Minimal structured data
 
-- JSON (prettified, 17 bytes):
+- Prettified JSON:
 
 ```json
 {
@@ -60,10 +60,16 @@ Disclaimer: For handling JSON, I've used [JSONCompare](https://jsoncompare.com/)
 }
 ```
 
-- JSON (minified, 13 bytes):
+- Minified JSON (13 bytes):
 
 ```json
 {"foo":"bar"}
+```
+
+- MessagePack (9 bytes):
+
+```txt
+<81 A3> foo <A3> bar
 ```
 
 - Protobuf (5 bytes):
@@ -82,11 +88,11 @@ message Example {
 foo: bar
 ```
 
-__Result__: YAZip's final size is 61.5% of the minified JSON's, and 133.3% of Protobuf's.
+__Result__: YAZip's final size is 61.5% of the minified JSON's, 88.9% of MessagePack's, and 133.3% of Protobuf's.
 
 ### List of similar objects
 
-- Prettified JSON (201 bytes):
+- Prettified JSON:
 
 ```json
 [{
@@ -108,6 +114,12 @@ __Result__: YAZip's final size is 61.5% of the minified JSON's, and 133.3% of Pr
 
 ```json
 [{"origin":"github","user":"epiceric","repo":"basicc"},{"origin":"github","user":"berna-l","repo":"sts-docs"},{"origin":"github","user":"epiceric","repo":"mtmg.com.br"}]
+```
+
+- MessagePack (130 bytes):
+
+```txt
+<90 83 A6> origin <A6> github <A4> user <A8> epiceric <A4> repo <A6> basicc <83 A6> origin <A6> github <A4> user <A7> berna-l <A4> repo <A8> sts-docs <83 A6> origin <A6> github <A4> user <A8> epiceric <A4> repo <AB> mtmg.com.br
 ```
 
 - Protobuf (90 bytes) -- note that we _must_ enclose our array with an object:
@@ -145,9 +157,9 @@ message Example {
 [&D {origin: github,user: epiceric,&E repo: basicc},{<<: *D,user: berna-l,*E: sts-docs},{<<: *D,*E: mtmg.com.br}]
 ```
 
-Anchors within anchors let us replicate the same object or strings over and over when only a few fields actually change.
+Anchors within anchors let us replicate the same object or strings over and over when only a few fields actually change. The better the common denominator (i.e. the object with the closest fields to all other objects), the better the compression.
 
-__Result__: YAZip's final size is 66.9% of the minified JSON's, and 125.6% of Protobuf's.
+__Result__: YAZip's final size is 66.9% of the minified JSON's, 86.9% of MessagePack's, and 125.6% of Protobuf's.
 
 ## Implementation
 
@@ -156,7 +168,7 @@ _//TODO: Create an official implementation_
 ## How can I help?
 
 - By reviewing the YAZip specification. _//TODO: Create a YAZip specification_
-- By improving the official implementations of the YAZip encoder.
+- By improving the official implementations of the YAZip encoder. _//TODO: Create an official implementation_
 - By creating new implementations of the YAZip encoder in other languages.
 - By updating open-source YAML parser libraries that do not conform to YAML 1.2 yet.
 - By implementing the YAZip encoder on your favorite open-source projects.
